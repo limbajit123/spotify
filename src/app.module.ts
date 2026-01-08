@@ -14,6 +14,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Song } from './songs/entities/song.entity';
+import { User } from './users/entities/user.entity';
+import { Artist } from './users/entities/artist.entity';
+import { Playlist } from './playlist/entities/playlist.entity';
+import { PlaylistModule } from './playlist/playlist.module';
 // import { SongsController } from './songs/songs.controller';
 
 // const devConfig = {
@@ -42,10 +46,11 @@ import { Song } from './songs/entities/song.entity';
         // autoLoadModels: true,
         synchronize: true,
         // logging: false,
-        entities: [Song],
+        entities: [Song, Artist, User, Playlist],
       }),
     }),
     SongsModule,
+    PlaylistModule,
     LoggerModule,
   ],
   controllers: [AppController],

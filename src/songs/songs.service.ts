@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { connection } from 'src/common/middleware/constants/connection';
 import type { Connection } from 'src/common/middleware/constants/connection';
 import { Song } from './entities/song.entity';
-import { Repository, UpdateResult } from 'typeorm';
+import { In, Repository, UpdateResult } from 'typeorm';
 import { CreateSongDto } from './dto/create-song.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
 import {
@@ -17,10 +17,13 @@ import {
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
+import { Artist } from 'src/users/entities/artist.entity';
 @Injectable()
 export class SongsService {
   constructor(
     @InjectRepository(Song) private readonly songRepository: Repository<Song>,
+    @InjectRepository(Artist)
+    private readonly artistRepository: Repository<Artist>,
   ) {}
 
   async create(songDTO: CreateSongDto): Promise<Song> {
@@ -30,6 +33,10 @@ export class SongsService {
     song.releasedDate = songDTO.releasedDate;
     song.duration = songDTO.duration;
     song.lyrics = songDTO.lyrics;
+    const artists = await this.artistRepository.findBy({
+      id: In(songDTO.artists),
+    });
+    song.artists = artists;
     return await this.songRepository.save(song);
   }
 
