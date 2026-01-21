@@ -4,6 +4,10 @@ import {
   TypeOrmModuleOptions,
 } from '@nestjs/typeorm';
 import 'dotenv/config';
+import { Playlist } from 'src/playlist/entities/playlist.entity';
+import { Song } from 'src/songs/entities/song.entity';
+import { Artist } from 'src/users/entities/artist.entity';
+import { User } from 'src/users/entities/user.entity';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
@@ -19,7 +23,7 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       username: configService.get<string>('dbUsername'),
       password: configService.get<string>('dbPassword'),
       database: configService.get<string>('dbName'),
-      entities: ['dist/**/*.entity.js'],
+      entities: [User, Playlist, Artist, Song],
       synchronize: false,
       migrations: ['dist/db/migrations/*.js'],
     };

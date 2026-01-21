@@ -24,30 +24,31 @@ export class AuthService {
     { accessToken: string } | { validate2FA: string; message: string }
   > {
     const user = await this.userService.findOne(loginDTO);
+
     const passwordMatched = await bcrypt.compare(
       loginDTO.password,
       user.password,
     );
-    if (passwordMatched) {
-      // return user;
-      const payload: PayloadType = { email: user.email, userId: user.id };
-      const artist = await this.artistService.findArtist(user.id);
-      if (artist) {
-        payload.artistId = artist.id;
-      }
-      if (user.enable2FA && user.twoFASecret) {
-        return {
-          validate2FA: 'http://localhost:3000/auth/validate-2fa',
-          message:
-            'Please send the one-time password/token from your Google Authenticator App',
-        };
-      }
-      return {
-        accessToken: this.jwtService.sign(payload),
-      };
-    } else {
+    if (!passwordMatched) {
       throw new UnauthorizedException('Password does not match');
     }
+    const payload: PayloadType = { email: user.email, userId: user.id };
+
+    const artist = await this.artistService.findArtist(user.id);
+    if (artist) {
+      payload.artistId = artist.id;
+    }
+
+    if (user.enable2FA && user.twoFASecret) {
+      return {
+        validate2FA: 'http://localhost:3000/auth/validate-2fa',
+        message:
+          'Please send the one-time password/token from your Google Authenticator App',
+      };
+    }
+    return {
+      accessToken: this.jwtService.sign(payload),
+    };
   }
 
   async enable2FA(userId: number): Promise<Enable2FAType> {
