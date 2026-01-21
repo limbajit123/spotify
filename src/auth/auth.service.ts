@@ -9,12 +9,14 @@ import { PayloadType } from 'src/types/payload.type';
 import { Enable2FAType } from 'src/types/auth-types';
 import * as speakeasy from 'speakeasy';
 import { UpdateResult } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
     private readonly artistService: ArtistsService,
+    private readonly configService: ConfigService,
   ) {}
   async login(
     loginDTO: LoginDto,
@@ -86,5 +88,8 @@ export class AuthService {
   }
   async validateUserByApiKey(apiKey: string): Promise<User> {
     return this.userService.findByApiKey(apiKey);
+  }
+  getEnvVariables() {
+    return this.configService.get<number>('port');
   }
 }

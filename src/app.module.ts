@@ -18,8 +18,10 @@ import { PlaylistModule } from './playlist/playlist.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ArtistsModule } from './artists/artists.module';
-import { dataSourceOptions } from './db/data-source';
+import { typeOrmAsyncConfig } from './db/data-source';
 import { SeedModule } from './seed/seed.module';
+import configuration from './config/configuration';
+import { validate } from './config/env.validation';
 
 // const devConfig = {
 //   port: 3000,
@@ -32,25 +34,12 @@ import { SeedModule } from './seed/seed.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env.development', '.env.production'],
+      load: [configuration],
+      validate: validate,
     }),
-    // TypeOrmModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: (configService: ConfigService) => ({
-    //     type: 'postgres',
-    //     // dialect: configService.getOrThrow<string>('DB_DIALECT'),
-    //     host: configService.getOrThrow<string>('DB_HOST'),
-    //     port: +configService.getOrThrow<string>('DB_PORT'),
-    //     username: configService.getOrThrow<string>('DB_USERNAME'),
-    //     password: configService.getOrThrow<string>('DB_PASSWORD'),
-    //     database: configService.getOrThrow<string>('DB_NAME'),
-    //     // autoLoadModels: true,
-    //     synchronize: true,
-    //     // logging: false,
-    //     entities: [Song, Artist, User, Playlist],
-    //   }),
-    // }),
-    TypeOrmModule.forRoot(dataSourceOptions),
+    TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    // TypeOrmModule.forRoot(dataSourceOptions),
     SongsModule,
     PlaylistModule,
     LoggerModule,
