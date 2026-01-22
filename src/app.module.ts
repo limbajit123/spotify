@@ -2,23 +2,26 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
-  RequestMethod,
+  // RequestMethod,
 } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SongsModule } from './songs/songs.module';
 import { LoggerModule } from './common/middleware/logger/logger.module';
-import { LoggerMiddleware } from './common/middleware/logger.middleware';
-import { DevConfigService } from './common/providers/DevConfigService';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+// import { LoggerMiddleware } from './common/middleware/logger.middleware';
+// import { DevConfigService } from './common/providers/DevConfigService';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { Song } from './songs/entities/song.entity';
-import { User } from './users/entities/user.entity';
-import { Artist } from './users/entities/artist.entity';
-import { Playlist } from './playlist/entities/playlist.entity';
 import { PlaylistModule } from './playlist/playlist.module';
 // import { SongsController } from './songs/songs.controller';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { ArtistsModule } from './artists/artists.module';
+import { typeOrmAsyncConfig } from './db/data-source';
+import { SeedModule } from './seed/seed.module';
+import configuration from './config/configuration';
+import { validate } from './config/env.validation';
 
 // const devConfig = {
 //   port: 3000,
@@ -31,27 +34,19 @@ import { PlaylistModule } from './playlist/playlist.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [`${process.cwd()}/.env.${process.env.NODE_ENV}`],
+      load: [configuration],
+      validate: validate,
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        // dialect: configService.getOrThrow<string>('DB_DIALECT'),
-        host: configService.getOrThrow<string>('DB_HOST'),
-        port: +configService.getOrThrow<string>('DB_PORT'),
-        username: configService.getOrThrow<string>('DB_USERNAME'),
-        password: configService.getOrThrow<string>('DB_PASSWORD'),
-        database: configService.getOrThrow<string>('DB_NAME'),
-        // autoLoadModels: true,
-        synchronize: true,
-        // logging: false,
-        entities: [Song, Artist, User, Playlist],
-      }),
-    }),
+    TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    // TypeOrmModule.forRoot(dataSourceOptions),
     SongsModule,
     PlaylistModule,
     LoggerModule,
+    UsersModule,
+    AuthModule,
+    ArtistsModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,0 +1,96 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { User } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
+import * as bcrypt from 'bcryptjs';
+import { LoginDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { ArtistsService } from 'src/artists/artists.service';
+import { PayloadType } from 'src/types/payload.type';
+import { Enable2FAType } from 'src/types/auth-types';
+import * as speakeasy from 'speakeasy';
+import { UpdateResult } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly userService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly artistService: ArtistsService,
+    private readonly configService: ConfigService,
+  ) {}
+  async login(
+    loginDTO: LoginDto,
+  ): Promise<
+    { accessToken: string } | { validate2FA: string; message: string }
+  > {
+    const user = await this.userService.findOne(loginDTO);
+
+    const passwordMatched = await bcrypt.compare(
+      loginDTO.password,
+      user.password,
+    );
+    if (!passwordMatched) {
+      throw new UnauthorizedException('Password does not match');
+    }
+    const payload: PayloadType = { email: user.email, userId: user.id };
+
+    const artist = await this.artistService.findArtist(user.id);
+    if (artist) {
+      payload.artistId = artist.id;
+    }
+
+    if (user.enable2FA && user.twoFASecret) {
+      return {
+        validate2FA: 'http://localhost:3000/auth/validate-2fa',
+        message:
+          'Please send the one-time password/token from your Google Authenticator App',
+      };
+    }
+    return {
+      accessToken: this.jwtService.sign(payload),
+    };
+  }
+
+  async enable2FA(userId: number): Promise<Enable2FAType> {
+    const user = await this.userService.findById(userId);
+    if (user.enable2FA && user.twoFASecret) {
+      return { secret: user.twoFASecret };
+    }
+    const secret = speakeasy.generateSecret();
+    const base32Secret = secret.base32;
+    await this.userService.updateSecretKey(user.id, base32Secret);
+    return { secret: base32Secret };
+  }
+
+  async disable2FA(userId: number): Promise<UpdateResult> {
+    return this.userService.disable2FA(userId);
+  }
+
+  async validate2FAToken(
+    userId: number,
+    token: string,
+  ): Promise<{ verified: boolean }> {
+    try {
+      const user = await this.userService.findById(userId);
+
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFASecret,
+        token: token,
+        encoding: 'base32',
+      });
+      if (verified) {
+        return { verified: true };
+      } else {
+        return { verified: false };
+      }
+    } catch (err) {
+      throw new UnauthorizedException('Error verifying token');
+    }
+  }
+  async validateUserByApiKey(apiKey: string): Promise<User> {
+    return this.userService.findByApiKey(apiKey);
+  }
+  getEnvVariables() {
+    return this.configService.get<number>('port');
+  }
+}
