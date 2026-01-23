@@ -13,7 +13,7 @@ class EnvironmentVariables {
   NODE_ENV: Environment;
 
   @IsNumber()
-  APP_PORT: number;
+  PORT: number;
 
   @IsNumber()
   DB_PORT: number;
