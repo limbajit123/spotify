@@ -41,11 +41,19 @@ export class SongsService {
   }
 
   async findAll(): Promise<Song[]> {
-    return await this.songRepository.find();
+    try {
+      return await this.songRepository.find();
+    } catch (error) {
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { cause: error },
+      );
+    }
   }
   async findOne(id: number): Promise<Song> {
     const song = await this.songRepository.findOneBy({ id });
-    if (!song) throw new HttpException('song not found', HttpStatus.NOT_FOUND);
+    if (!song) throw new HttpException('Song not found', HttpStatus.NOT_FOUND);
     return song;
   }
   async remove(id: number): Promise<void> {

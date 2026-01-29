@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository, UpdateResult } from 'typeorm';
@@ -12,6 +18,14 @@ export class UsersService {
   ) {}
 
   async create(userDTO: CreateUserDto): Promise<User> {
+    const existingUser = await this.usersRepository.findOneBy({
+      email: userDTO.email,
+    });
+    if (existingUser) {
+      throw new ConflictException(
+        'User already exists with this email address.',
+      );
+    }
     const salt = await bcrypt.genSalt();
     userDTO.password = await bcrypt.hash(userDTO.password, salt);
     const user = new User();
@@ -25,7 +39,7 @@ export class UsersService {
   async findOne(data: Partial<User>): Promise<User> {
     const user = await this.usersRepository.findOneBy({ email: data.email });
     if (!user) {
-      throw new UnauthorizedException('Could not find user');
+      throw new NotFoundException('Could not find user');
     }
     return user;
   }
@@ -41,7 +55,7 @@ export class UsersService {
   async findById(id: number): Promise<User> {
     const user = await this.usersRepository.findOneBy({ id: id });
     if (!user) {
-      throw new Error('User not found');
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return user;
   }
@@ -57,8 +71,11 @@ export class UsersService {
   async findByApiKey(apiKey: string): Promise<User> {
     const user = await this.usersRepository.findOneBy({ apiKey });
     if (!user) {
-      throw new UnauthorizedException('Could not find user');
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return user;
+  }
+  async findAll(): Promise<User[]> {
+    return await this.usersRepository.find();
   }
 }

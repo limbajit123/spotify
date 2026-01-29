@@ -95,9 +95,4 @@ export class AuthController {
   getProfile(@Request() req) {
     return { user: req.user, msg: 'Authenticated with api key' };
   }
-
-  // @Get('test')
-  // testEnv() {
-  //   return this.authService.getEnvVariables();
-  // }
 }
