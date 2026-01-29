@@ -22,7 +22,12 @@ import { UpdateResult } from 'typeorm';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { JwtArtistGuard } from 'src/auth/jwt/jwt-artist.guard';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @Controller('songs')
 @ApiTags('Songs')
@@ -35,6 +40,7 @@ export class SongsController {
     description: 'It will return the song in the response',
   })
   @Post()
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtArtistGuard)
   create(@Body() createSongDTO: CreateSongDto, @Request() req): Promise<Song> {
     const result = this.songsService.create(createSongDTO);
@@ -47,6 +53,7 @@ export class SongsController {
     description: 'It will return all the songs in the response',
   })
   @Get()
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
@@ -54,16 +61,8 @@ export class SongsController {
     @Query('sortBy') sortBy: string = 'releasedDate',
     @Query('order') order: 'ASC' | 'DESC' = 'DESC',
   ): Promise<Pagination<Song>> {
-    try {
-      limit = limit > 100 ? 100 : limit;
-      return this.songsService.paginate({ page, limit }, sortBy, order);
-    } catch (error) {
-      throw new HttpException(
-        'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        { cause: error },
-      );
-    }
+    limit = limit > 100 ? 100 : limit;
+    return this.songsService.paginate({ page, limit }, sortBy, order);
   }
 
   @ApiOperation({ summary: 'Get song by id' })
@@ -72,6 +71,7 @@ export class SongsController {
     description: 'It will return the song in the response',
   })
   @Get(':id')
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   findOne(
     @Param('id', ParseIntPipe)
@@ -96,6 +96,7 @@ export class SongsController {
   })
   @Put(':id')
   @UseGuards(JwtArtistGuard)
+  @ApiBearerAuth('JWT-auth')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSongDTO: UpdateSongDto,

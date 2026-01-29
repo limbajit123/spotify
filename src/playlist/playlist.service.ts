@@ -34,4 +34,14 @@ export class PlaylistService {
       relations: ['user', 'songs'],
     });
   }
+  async findById(id: number): Promise<Playlist> {
+    const playlist = await this.playlistRepository.findOne({
+      where: { id: id },
+      relations: ['user', 'songs'],
+    });
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+    return playlist;
+  }
 }

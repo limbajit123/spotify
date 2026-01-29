@@ -5,11 +5,13 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { PlaylistService } from './playlist.service';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { Playlist } from './entities/playlist.entity';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
 
 @Controller('playlists')
 @ApiTags('Playlists')
@@ -21,6 +23,7 @@ export class PlaylistController {
     status: 200,
     description: 'It will return playlist in the response',
   })
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(
     @Body()
@@ -34,6 +37,7 @@ export class PlaylistController {
     status: 200,
     description: 'It will return all playlist in the response',
   })
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(): Promise<Playlist[]> {
     try {
@@ -45,5 +49,15 @@ export class PlaylistController {
         { cause: error },
       );
     }
+  }
+  @ApiOperation({ summary: 'Get a playlist' })
+  @ApiResponse({
+    status: 200,
+    description: 'It will return a playlist in the response',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(id: number): Promise<Playlist> {
+    return this.playListService.findById(id);
   }
 }
